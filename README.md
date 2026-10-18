@@ -55,8 +55,8 @@ Every push to `main` builds automatically on GitHub Actions.
 
 To make a new release with a downloadable APK on GitHub:
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.2
+git push origin v1.0.2
 ```
 This triggers the workflow to compile the APK and attach it to a GitHub Release.
 
