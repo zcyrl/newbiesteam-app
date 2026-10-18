@@ -1,65 +1,61 @@
-# NewbiesTeam Android App (V1.0.0)
+# NewbiesTeam Android App
 
-A high-performance native Android application for the [NewbiesTeam GT 20 Pro Hub](https://newbiesteam.surge.sh), built with modern Android standards, Material 3 adaptive theming, offline resilience, and prepared for future Kotlin Multiplatform (KMP) expansion.
+The official Android app for the [NewbiesTeam GT 20 Pro Hub](https://newbiesteam.surge.sh).
 
----
-
-## Key Features
-
-* **Material 3 Adaptive Theming**: Built on `Theme.Material3.DayNight.NoActionBar` with dynamic color harmonizing (`DynamicColors`) and edge-to-edge transparent system bars for AMOLED screens (`#120d0d` & crimson `#d97757`).
-* **Hardware Accelerated WebView**: Zero-latency browsing with intelligent offline fallback (`LOAD_DEFAULT` when online, `LOAD_CACHE_ELSE_NETWORK` when offline), DOM storage, and hardware layer acceleration.
-* **Smart Native Navigation & Interception**:
-  * Hardware back button wired to WebView history.
-  * Native intent interception for ROM downloads (Google Drive, SourceForge, GitHub, Telegram, `.zip`, `.apk`, `.bin`, `.img`).
-* **Background Updates (WorkManager)**:
-  * Periodic background worker polling `updates.json` every 2 hours with network constraints.
-  * Posts rich native notifications when a new release or announcement appears.
-  * Direct deep linking to `https://newbiesteam.surge.sh/#updates`.
-* **Animated Opening Splash**: Smooth crimson radial glow + scale pulse with GPU-accelerated fade-out on page finish.
-* **CI/CD Cloud Builder**: Fully automated GitHub Actions workflow compiling debug & release APKs on Java 17 Temurin without requiring local Android Studio.
+It wraps the website in an Android WebView so you can browse ROMs, kernels, recovery tools, and guides directly from your phone.
 
 ---
 
-## Architecture & Kotlin Multiplatform (KMP) Roadmap
+## What it does
 
-The project is structured with strict separation between pure Kotlin core business logic and Android platform APIs to ensure effortless migration to Kotlin Multiplatform (KMP) in the future:
+* **Dark Theme**: Matches the site's dark AMOLED background (`#120d0d`) and crimson colors (`#d97757`).
+* **Offline Caching**: If you have internet it loads fresh content. If you're offline, it loads from cache so you can still read guides.
+* **External Downloads**: Download links (Google Drive, SourceForge, GitHub, Mega, MediaFire, Telegram, and direct `.zip` or `.apk` files) open in your browser or default app instead of breaking inside the WebView.
+* **Back Button Navigation**: Pressing your phone's back button navigates back through pages before closing the app.
+* **Pull to Refresh**: Swipe down from the top to reload the page.
+* **Background Notifications**: Uses WorkManager to check `updates.json` every couple of hours. When someone posts a new ROM or update, you get a phone notification. Tapping it takes you straight to the updates tab.
+
+---
+
+## Project Structure
+
+The code is split so business logic stays separate from Android UI. That way, if we want to make an iOS version with Kotlin Multiplatform (KMP) later, the core logic can be reused without rewriting it.
 
 ```
-android-app/
-├── app/src/main/java/team/newbies/
-│   ├── core/                        <-- [KMP Ready: Pure Common Logic]
-│   │   ├── model/
-│   │   │   ├── UpdatePost.kt        # Pure domain model for feed items
-│   │   │   └── UrlRoute.kt          # Sealed route hierarchy
-│   │   ├── router/
-│   │   │   └── UrlRouter.kt         # Platform-independent URL classification
-│   │   ├── parser/
-│   │   │   └── FeedParser.kt        # Pure JSON & regex feed parser
-│   │   └── repository/
-│   │       └── UpdatesRepository.kt # HTTP updates fetcher & synchronizer
-│   │
-│   └── app/                         <-- [Android Platform Layer]
-│       ├── MainActivity.kt          # Material 3 Edge-to-Edge WebView & Insets
-│       ├── NewbiesApp.kt            # Application, Dynamic Colors & Channels
-│       └── UpdatesWorker.kt         # WorkManager background worker
+app/src/main/java/team/newbies/
+├── core/                        # Pure Kotlin (No Android imports, KMP ready)
+│   ├── model/UpdatePost.kt      # Post data model
+│   ├── model/UrlRoute.kt        # Route types (internal, external, download)
+│   ├── router/UrlRouter.kt      # Decides which links open inside vs outside
+│   ├── parser/FeedParser.kt     # Parses updates.json and data.js
+│   └── repository/UpdatesRepository.kt # Fetches the latest updates from the web
+│
+└── app/                         # Android-specific code
+    ├── MainActivity.kt          # WebView setup, back button, edge-to-edge
+    ├── NewbiesApp.kt            # App startup and notification channel setup
+    └── UpdatesWorker.kt         # Background worker for update checks
 ```
-
-### Migrating to KMP:
-To port this app to iOS or Compose Multiplatform:
-1. Create a `:shared` KMP module.
-2. Move `team.newbies.core` directly to `shared/src/commonMain/kotlin`.
-3. Keep `team.newbies.app` in `androidApp/src/main/kotlin`.
-4. Implement `iosApp` using the shared `UpdatesRepository` and `UrlRouter`.
 
 ---
 
-## Building Locally or in CI
+## How to Build
 
-### Local Build:
+### Local
+Make sure you have JDK 17 installed, then run:
+
 ```bash
 ./gradlew assembleDebug
 ```
-The compiled APK will be at `app/build/outputs/apk/debug/app-debug.apk`.
 
-### GitHub Actions Cloud Build:
-Pushing to `main` or pushing a version tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`) automatically compiles the APK in the cloud and publishes a release artifact.
+The APK will be saved to:
+`app/build/outputs/apk/debug/app-debug.apk`
+
+### GitHub Actions
+Every push to `main` builds automatically on GitHub Actions.
+
+To make a new release with a downloadable APK on GitHub:
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+This triggers the workflow to compile the APK and attach it to a GitHub Release.
