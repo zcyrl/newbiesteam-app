@@ -17,50 +17,7 @@ It wraps the website in an Android WebView so you can browse ROMs, kernels, reco
 
 ---
 
-## Project Structure
 
-The code is split so business logic stays separate from Android UI. That way, if we want to make an iOS version with Kotlin Multiplatform (KMP) later, the core logic can be reused without rewriting it.
-
-```
-app/src/main/java/team/newbies/
-├── core/                        # Pure Kotlin (No Android imports, KMP ready)
-│   ├── model/UpdatePost.kt      # Post data model
-│   ├── model/UrlRoute.kt        # Route types (internal, external, download)
-│   ├── router/UrlRouter.kt      # Decides which links open inside vs outside
-│   ├── parser/FeedParser.kt     # Parses updates.json and data.js
-│   └── repository/UpdatesRepository.kt # Fetches the latest updates from the web
-│
-└── app/                         # Android-specific code
-    ├── MainActivity.kt          # WebView setup, back button, edge-to-edge
-    ├── NewbiesApp.kt            # App startup and notification channel setup
-    └── UpdatesWorker.kt         # Background worker for update checks
-```
-
----
-
-## How to Build
-
-### Local
-Make sure you have JDK 17 installed, then run:
-
-```bash
-./gradlew assembleDebug
-```
-
-The APK will be saved to:
-`app/build/outputs/apk/debug/app-debug.apk`
-
-### GitHub Actions
-Every push to `main` builds automatically on GitHub Actions.
-
-To make a new release with a downloadable APK on GitHub:
-```bash
-git tag v1.0.2
-git push origin v1.0.2
-```
-This triggers the workflow to compile the APK and attach it to a GitHub Release.
-
----
 
 ## Release Signing & Play Protect
 
