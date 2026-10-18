@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -19,6 +20,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
+import android.webkit.CookieManager
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -32,16 +34,20 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import team.newbies.core.model.UrlRoute
+import team.newbies.core.router.UrlRouter
 
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        const val BASE_URL = "https://newbiesteam.surge.sh"
-        const val BASE_HOST = "newbiesteam.surge.sh"
         private const val SPLASH_TIMEOUT_MS = 4500L
     }
 
+    private lateinit var rootLayout: View
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var webView: WebView
     private lateinit var splashOverlay: FrameLayout
@@ -59,16 +65,21 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Enable Material 3 Edge-to-Edge display
+        setupEdgeToEdge()
+
         setContentView(R.layout.activity_main)
 
         initViews()
+        applyWindowInsets()
         startSplashAnimation()
         setupWebView()
         setupSwipeRefresh()
         setupBackNavigation()
         requestNotificationPermissionIfNeeded()
 
-        val initialUrl = intent?.getStringExtra("target_url") ?: BASE_URL
+        val initialUrl = intent?.getStringExtra("target_url") ?: UrlRouter.DEFAULT_HUB_URL
         loadWebPage(initialUrl)
 
         // Safety fallback timer so splash always dismisses even if connection is slow
@@ -84,12 +95,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupEdgeToEdge() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
+
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        controller.isAppearanceLightStatusBars = false
+        controller.isAppearanceLightNavigationBars = false
+    }
+
     private fun initViews() {
+        rootLayout = findViewById(R.id.mainRootLayout)
         swipeRefresh = findViewById(R.id.swipeRefresh)
         webView = findViewById(R.id.webView)
         splashOverlay = findViewById(R.id.splashOverlay)
         splashGlow = findViewById(R.id.splashGlow)
         splashLogo = findViewById(R.id.splashLogo)
+    }
+
+    private fun applyWindowInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(rootLayout) { _, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Apply padding to root so content fits below status bar and above navigation bar
+            rootLayout.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
     }
 
     private fun startSplashAnimation() {
@@ -125,7 +156,7 @@ class MainActivity : AppCompatActivity() {
 
         splashOverlay.animate()
             .alpha(0f)
-            .setDuration(450)
+            .setDuration(420)
             .withEndAction {
                 splashAnimatorSet?.cancel()
                 splashOverlay.visibility = View.GONE
@@ -135,6 +166,18 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun setupWebView() {
+        // Hardware acceleration
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+        webView.overScrollMode = View.OVER_SCROLL_NEVER
+        webView.isVerticalScrollBarEnabled = false
+        webView.isHorizontalScrollBarEnabled = false
+
+        // Cookie Manager
+        CookieManager.getInstance().apply {
+            setAcceptCookie(true)
+            setAcceptThirdPartyCookies(webView, true)
+        }
+
         val settings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
@@ -146,6 +189,7 @@ class MainActivity : AppCompatActivity() {
         settings.displayZoomControls = false
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
+        settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/1.0"
 
         applyCacheMode()
@@ -179,20 +223,22 @@ class MainActivity : AppCompatActivity() {
                 view: WebView?,
                 request: WebResourceRequest?
             ): Boolean {
-                val uri = request?.url ?: return false
-                return handleUrlNavigation(uri)
+                val url = request?.url?.toString() ?: return false
+                return handleUrlNavigation(url)
             }
 
             @Deprecated("Deprecated in Java")
             override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
                 if (url == null) return false
-                return handleUrlNavigation(Uri.parse(url))
+                return handleUrlNavigation(url)
             }
         }
 
         webView.setDownloadListener { url, _, _, _, _ ->
             try {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
                 startActivity(intent)
             } catch (e: Exception) {
                 Toast.makeText(this, "Cannot open download link", Toast.LENGTH_SHORT).show()
@@ -200,14 +246,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun handleUrlNavigation(uri: Uri): Boolean {
-        val scheme = uri.scheme?.lowercase() ?: ""
-        val host = uri.host?.lowercase() ?: ""
+    private fun handleUrlNavigation(url: String): Boolean {
+        // Delegate routing logic to KMP core router
+        return when (val route = UrlRouter.resolveRoute(url)) {
+            is UrlRoute.InternalWeb -> {
+                // Stay inside embedded WebView
+                false
+            }
+            is UrlRoute.DirectDownload -> {
+                openExternal(Uri.parse(route.url))
+                true
+            }
+            is UrlRoute.ExternalBrowser -> {
+                openExternal(Uri.parse(route.url))
+                true
+            }
+            is UrlRoute.SpecialIntent -> {
+                handleSpecialScheme(route.uriString, route.scheme)
+                true
+            }
+        }
+    }
 
-        // Handle custom intent / deep link schemes
+    private fun handleSpecialScheme(uriString: String, scheme: String) {
         if (scheme == "intent") {
             try {
-                val parsedIntent = Intent.parseUri(uri.toString(), Intent.URI_INTENT_SCHEME)
+                val parsedIntent = Intent.parseUri(uriString, Intent.URI_INTENT_SCHEME)
                 if (parsedIntent != null) {
                     val packageManager = packageManager
                     val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -221,44 +285,23 @@ class MainActivity : AppCompatActivity() {
                     }
                     if (info != null) {
                         startActivity(parsedIntent)
-                        return true
+                        return
                     }
                     val fallbackUrl = parsedIntent.getStringExtra("browser_fallback_url")
                     if (!fallbackUrl.isNullOrEmpty()) {
-                        return handleUrlNavigation(Uri.parse(fallbackUrl))
+                        handleUrlNavigation(fallbackUrl)
+                        return
                     }
                 }
             } catch (_: Exception) {}
-            return true
+            return
         }
 
-        if (scheme == "tel" || scheme == "mailto" || scheme == "tg") {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, uri))
-            } catch (_: ActivityNotFoundException) {
-                Toast.makeText(this, "No app available to handle this action", Toast.LENGTH_SHORT).show()
-            }
-            return true
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(uriString)))
+        } catch (_: ActivityNotFoundException) {
+            Toast.makeText(this, "No app available to handle this link", Toast.LENGTH_SHORT).show()
         }
-
-        // Check if inside our web hub
-        if (host == BASE_HOST || host.endsWith(".$BASE_HOST") || host == "localhost") {
-            val path = uri.path?.lowercase() ?: ""
-            // Direct download files should open externally
-            val isDownloadFile = path.endsWith(".zip") || path.endsWith(".apk") ||
-                    path.endsWith(".tar") || path.endsWith(".gz") ||
-                    path.endsWith(".bin") || path.endsWith(".img")
-            if (isDownloadFile) {
-                openExternal(uri)
-                return true
-            }
-            // Normal internal page navigation stays in WebView
-            return false
-        }
-
-        // External link: Google Drive, SourceForge, GitHub, Telegram, etc.
-        openExternal(uri)
-        return true
     }
 
     private fun openExternal(uri: Uri) {
@@ -276,8 +319,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupSwipeRefresh() {
         swipeRefresh.setColorSchemeResources(
+            R.color.m3_primary,
             R.color.accent_crimson,
-            R.color.accent_glow,
             R.color.text_ink
         )
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.black_card)
@@ -343,6 +386,13 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         splashHandler.removeCallbacks(splashTimeoutRunnable)
         splashAnimatorSet?.cancel()
+        webView.apply {
+            stopLoading()
+            loadUrl("about:blank")
+            clearHistory()
+            removeAllViews()
+            destroy()
+        }
         super.onDestroy()
     }
 }

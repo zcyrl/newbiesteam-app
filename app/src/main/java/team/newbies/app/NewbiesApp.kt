@@ -10,12 +10,17 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.android.material.color.DynamicColors
 import java.util.concurrent.TimeUnit
 
 class NewbiesApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Apply Material 3 Adaptive Dynamic Colors if available on device
+        DynamicColors.applyToActivitiesIfAvailable(this)
+
         createNotificationChannel()
         scheduleUpdatesWorker()
     }

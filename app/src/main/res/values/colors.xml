@@ -1,12 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Base Obsidian Palette -->
     <color name="black_dark">#120d0d</color>
+    <color name="black_card">#1c1717</color>
     <color name="status_bar">#120d0d</color>
     <color name="nav_bar">#120d0d</color>
+
+    <!-- Crimson & Ember Accent Palette -->
     <color name="accent_crimson">#d97757</color>
     <color name="accent_glow">#40d97757</color>
     <color name="crimson_glow">#40d97757</color>
-    <color name="black_card">#1c1717</color>
+
+    <!-- Typography & Contrast Ink -->
     <color name="text_ink">#f0eee6</color>
     <color name="text_muted">#9c978a</color>
+
+    <!-- Material 3 Semantic Color System -->
+    <color name="m3_primary">#d97757</color>
+    <color name="m3_on_primary">#120d0d</color>
+    <color name="m3_primary_container">#381d16</color>
+    <color name="m3_on_primary_container">#ffdbcf</color>
+
+    <color name="m3_secondary">#e6b6a8</color>
+    <color name="m3_on_secondary">#3e221a</color>
+    <color name="m3_secondary_container">#2a1d1b</color>
+    <color name="m3_on_secondary_container">#f0eee6</color>
+
+    <color name="m3_tertiary">#e89b6b</color>
+    <color name="m3_on_tertiary">#120d0d</color>
+
+    <color name="m3_background">#120d0d</color>
+    <color name="m3_on_background">#f0eee6</color>
+
+    <color name="m3_surface">#120d0d</color>
+    <color name="m3_on_surface">#f0eee6</color>
+    <color name="m3_surface_variant">#1c1717</color>
+    <color name="m3_on_surface_variant">#c7bfbe</color>
+    <color name="m3_surface_container">#181212</color>
+    <color name="m3_surface_container_high">#221a1a</color>
+
+    <color name="m3_outline">#3a2d2a</color>
+    <color name="m3_outline_variant">#261e1c</color>
 </resources>

@@ -1,8 +1,10 @@
-name: Build Android APK
+name: Build & Release Android APK
 
 on:
   push:
     branches: [ "main", "master" ]
+    tags:
+      - "v*"
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
@@ -15,6 +17,8 @@ jobs:
   build:
     name: Build & Package APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout Repository
@@ -36,6 +40,17 @@ jobs:
       - name: Upload Compiled APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NewbiesTeam-APK
+          name: NewbiesTeam-APK-v1.0.0
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: NewbiesTeam Android App ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: app/build/outputs/apk/debug/*.apk
+          generate_release_notes: true
+          draft: false
+          prerelease: false
