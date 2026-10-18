@@ -55,7 +55,21 @@ Every push to `main` builds automatically on GitHub Actions.
 
 To make a new release with a downloadable APK on GitHub:
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v1.0.1
+git push origin v1.0.1
 ```
 This triggers the workflow to compile the APK and attach it to a GitHub Release.
+
+---
+
+## Release Signing & Play Protect
+
+The app is signed with a permanent release keystore (`app/release.jks`, alias `newbiesteam`) so that:
+* Every build uses the exact same signature, so users can install future updates without uninstalling.
+* Play Protect remembers your key signature.
+
+If Google Play Protect shows an "Unrecognized app" popup on fresh installs:
+1. Tap **More details** -> **Install anyway**.
+2. Once installed, future updates signed with this key install without warnings.
+3. You can also submit the signed APK to [Google Play Protect Developer Form](https://support.google.com/googleplay/android-developer/contact/protectappeals) with your certificate SHA-256 (printed in the GitHub Actions build log) to whitelist it permanently.
+
