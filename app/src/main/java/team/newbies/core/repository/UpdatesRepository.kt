@@ -55,7 +55,7 @@ class UpdatesRepository(
                 connectTimeout = 8000
                 readTimeout = 8000
                 instanceFollowRedirects = true
-                setRequestProperty("User-Agent", "NewbiesTeam-Android/1.0 (KMP-Ready)")
+                setRequestProperty("User-Agent", "NewbiesTeam-Android/1.2 (KMP-Ready)")
             }
             if (connection.responseCode in 200..299) {
                 BufferedReader(InputStreamReader(connection.inputStream)).use { it.readText() }

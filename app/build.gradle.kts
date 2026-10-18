@@ -6,13 +6,16 @@ plugins {
 android {
     namespace = "team.newbies.app"
     compileSdk = 34
+    if (file("/home/vom/Android/Sdk/build-tools/37.0.0").exists()) {
+        buildToolsVersion = "37.0.0"
+    }
 
     defaultConfig {
         applicationId = "team.newbies.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.2"
+        versionCode = 4
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
