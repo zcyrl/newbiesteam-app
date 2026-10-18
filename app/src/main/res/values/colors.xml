@@ -4,7 +4,9 @@
     <color name="status_bar">#120d0d</color>
     <color name="nav_bar">#120d0d</color>
     <color name="accent_crimson">#d97757</color>
+    <color name="accent_glow">#40d97757</color>
     <color name="crimson_glow">#40d97757</color>
+    <color name="black_card">#1c1717</color>
     <color name="text_ink">#f0eee6</color>
     <color name="text_muted">#9c978a</color>
 </resources>
