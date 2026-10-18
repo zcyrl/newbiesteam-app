@@ -71,5 +71,5 @@ The app is signed with a permanent release keystore (`app/release.jks`, alias `n
 If Google Play Protect shows an "Unrecognized app" popup on fresh installs:
 1. Tap **More details** -> **Install anyway**.
 2. Once installed, future updates signed with this key install without warnings.
-3. You can also submit the signed APK to [Google Play Protect Developer Form](https://support.google.com/googleplay/android-developer/contact/protectappeals) with your certificate SHA-256 (printed in the GitHub Actions build log) to whitelist it permanently.
+
 
