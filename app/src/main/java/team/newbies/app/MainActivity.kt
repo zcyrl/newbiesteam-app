@@ -189,7 +189,7 @@ class MainActivity : AppCompatActivity() {
         settings.displayZoomControls = false
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
-        settings.mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
+        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/1.0"
 
         applyCacheMode()

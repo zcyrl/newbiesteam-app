@@ -56,14 +56,17 @@ jobs:
         run: |
           keytool -list -v -keystore app/release.jks -storepass newbiesteam2026
 
-      - name: Build Signed Release and Debug APKs
-        run: ./gradlew assembleRelease assembleDebug --stacktrace
+      - name: Build Signed Release APK
+        run: |
+          ./gradlew assembleRelease --stacktrace
+          mkdir -p dist
+          cp app/build/outputs/apk/release/*.apk dist/NewbiesTeam.apk
 
-      - name: Upload Compiled APK Artifacts
+      - name: Upload Compiled APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NewbiesTeam-Signed-APKs
-          path: app/build/outputs/apk/**/*.apk
+          name: NewbiesTeam-APK
+          path: dist/NewbiesTeam.apk
           if-no-files-found: error
 
       - name: Create or Update GitHub Release
@@ -72,9 +75,7 @@ jobs:
         with:
           name: NewbiesTeam Android App ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: |
-            app/build/outputs/apk/release/*.apk
-            app/build/outputs/apk/debug/*.apk
+          files: dist/NewbiesTeam.apk
           generate_release_notes: true
           draft: false
           prerelease: false
