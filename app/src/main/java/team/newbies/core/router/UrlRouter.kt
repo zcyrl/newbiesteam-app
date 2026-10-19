@@ -60,7 +60,9 @@ object UrlRouter {
         }
 
         // Check internal NewbiesTeam web hub
-        if (host == DEFAULT_HUB_HOST || host.endsWith(".$DEFAULT_HUB_HOST") || host == "localhost" || host == "127.0.0.1") {
+        if (host == DEFAULT_HUB_HOST || host.endsWith(".$DEFAULT_HUB_HOST") ||
+            host == "newbiesbase.surge.sh" || host.endsWith(".newbiesbase.surge.sh") ||
+            host == "localhost" || host == "127.0.0.1") {
             return UrlRoute.InternalWeb(cleanUrl)
         }
 

@@ -78,8 +78,8 @@ class MainActivity : AppCompatActivity() {
         setupSwipeRefresh()
         setupBackNavigation()
         requestNotificationPermissionIfNeeded()
-
-        val initialUrl = intent?.getStringExtra("target_url") ?: UrlRouter.DEFAULT_HUB_URL
+ 
+        val initialUrl = resolveTargetUrl(intent)
         loadWebPage(initialUrl)
 
         // Safety fallback timer so splash always dismisses even if connection is slow
@@ -89,10 +89,31 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        val targetUrl = intent.getStringExtra("target_url")
-        if (!targetUrl.isNullOrEmpty()) {
+        val targetUrl = resolveTargetUrl(intent)
+        if (targetUrl.isNotEmpty()) {
             loadWebPage(targetUrl)
         }
+    }
+
+    private fun resolveTargetUrl(intent: Intent?): String {
+        val targetUrl = intent?.getStringExtra("target_url")
+        if (!targetUrl.isNullOrEmpty()) return targetUrl
+
+        val data = intent?.data
+        if (data != null) {
+            val scheme = data.scheme?.lowercase()
+            if (scheme == "newbiesteam") {
+                val host = data.host ?: ""
+                val path = data.path ?: ""
+                val route = (host + path).trimStart('/')
+                val hash = if (route.isNotEmpty()) {
+                    if (route.startsWith("#")) route else "#$route"
+                } else ""
+                return "${UrlRouter.DEFAULT_HUB_URL}/$hash"
+            }
+            return data.toString()
+        }
+        return UrlRouter.DEFAULT_HUB_URL
     }
 
     private fun setupEdgeToEdge() {
