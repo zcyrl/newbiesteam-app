@@ -22,6 +22,7 @@ import android.os.Looper
 import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
@@ -202,8 +203,34 @@ class MainActivity : AppCompatActivity() {
         settings.displayZoomControls = false
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
-        settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-        settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/1.2.2"
+        val appVersionName = try {
+            packageManager.getPackageInfo(packageName, 0).versionName ?: "1.2.3"
+        } catch (_: Exception) {
+            "1.2.3"
+        }
+        val appVersionCode = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                packageManager.getPackageInfo(packageName, 0).longVersionCode
+            } else {
+                @Suppress("DEPRECATION")
+                packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
+            }
+        } catch (_: Exception) {
+            7L
+        }
+
+        settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/$appVersionName"
+
+        webView.addJavascriptInterface(object {
+            @JavascriptInterface
+            fun getAppVersion(): String = appVersionName
+
+            @JavascriptInterface
+            fun getAppVersionCode(): Long = appVersionCode
+
+            @JavascriptInterface
+            fun isAndroidApp(): Boolean = true
+        }, "AndroidBridge")
 
         applyCacheMode()
 
