@@ -22,7 +22,7 @@
         android:id="@+id/splashOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/black_dark"
+        android:background="@color/splash_background"
         android:clickable="true"
         android:focusable="true">
 
@@ -45,10 +45,10 @@
 
             <ImageView
                 android:id="@+id/splashLogo"
-                android:layout_width="120dp"
-                android:layout_height="120dp"
+                android:layout_width="140dp"
+                android:layout_height="140dp"
                 android:contentDescription="@string/app_name"
-                android:src="@drawable/logo_splash" />
+                android:src="@drawable/avd_logo_app" />
 
             <TextView
                 android:id="@+id/splashTitle"

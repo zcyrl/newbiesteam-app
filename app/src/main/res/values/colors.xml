@@ -2,6 +2,7 @@
 <resources>
     <!-- Base Obsidian Palette -->
     <color name="black_dark">#120d0d</color>
+    <color name="splash_background">#1B1A18</color>
     <color name="black_card">#1c1717</color>
     <color name="status_bar">#120d0d</color>
     <color name="nav_bar">#120d0d</color>
