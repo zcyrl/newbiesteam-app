@@ -45,7 +45,8 @@ class UpdatesWorker(
 
             if (currentId.isNotEmpty()) {
                 if (lastSeenId == null) {
-                    // First run: save current without notifying
+                    // First run: save current ID AND fire welcome heads-up notification
+                    sendWelcomeNotification(latestUpdate)
                     prefs.edit().putString(KEY_LAST_POST_ID, currentId).apply()
                 } else if (currentId != lastSeenId) {
                     // New post detected!
@@ -61,6 +62,47 @@ class UpdatesWorker(
         }
     }
 
+    private fun sendWelcomeNotification(latest: UpdatePost) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permission = ContextCompat.checkSelfPermission(
+                applicationContext,
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+            if (permission != PackageManager.PERMISSION_GRANTED) return
+        }
+
+        val intent = Intent(applicationContext, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            putExtra("target_url", "${UrlRouter.DEFAULT_HUB_URL}#updates")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            1,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle("Welcome to TheNewBiesTeam!")
+            .setContentText("Connected to Infinix GT 20 Pro hub. Latest: ${latest.title}")
+            .setStyle(NotificationCompat.BigTextStyle().bigText("Connected to Infinix GT 20 Pro hub.\nLatest update: ${latest.title}\nTap to view ROMs, Kernels, Modules and Changelogs."))
+            .setColor(Color.parseColor("#d97757"))
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        try {
+            NotificationManagerCompat.from(applicationContext).notify(NOTIFICATION_ID + 1, notification)
+        } catch (e: SecurityException) {
+            e.printStackTrace()
+        }
+    }
+
     private fun sendNotification(post: UpdatePost) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permission = ContextCompat.checkSelfPermission(
@@ -72,7 +114,7 @@ class UpdatesWorker(
             }
         }
 
-        val destinationUrl = if (post.targetUrl.isNotBlank()) post.targetUrl else UrlRouter.UPDATES_SECTION_URL
+        val destinationUrl = if (post.targetUrl.isNotBlank()) post.targetUrl else "${UrlRouter.DEFAULT_HUB_URL}#updates"
 
         val intent = Intent(applicationContext, MainActivity::class.java).apply {
             action = Intent.ACTION_VIEW
@@ -91,8 +133,10 @@ class UpdatesWorker(
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(post.notificationTitle)
             .setContentText(post.notificationBody)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(post.notificationBody))
             .setColor(Color.parseColor("#d97757"))
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()

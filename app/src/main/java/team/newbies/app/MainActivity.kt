@@ -88,6 +88,23 @@ class MainActivity : AppCompatActivity() {
         splashHandler.postDelayed(splashTimeoutRunnable, SPLASH_TIMEOUT_MS)
     }
 
+    override fun onResume() {
+        super.onResume()
+        triggerImmediateUpdateCheck()
+    }
+
+    private fun triggerImmediateUpdateCheck() {
+        try {
+            val constraints = androidx.work.Constraints.Builder()
+                .setRequiredNetworkType(androidx.work.NetworkType.CONNECTED)
+                .build()
+            val oneTimeWork = androidx.work.OneTimeWorkRequestBuilder<UpdatesWorker>()
+                .setConstraints(constraints)
+                .build()
+            androidx.work.WorkManager.getInstance(applicationContext).enqueue(oneTimeWork)
+        } catch (_: Exception) {}
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
@@ -99,7 +116,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun resolveTargetUrl(intent: Intent?): String {
         val targetUrl = intent?.getStringExtra("target_url")
-        if (!targetUrl.isNullOrEmpty()) return targetUrl
+        if (!targetUrl.isNullOrEmpty()) {
+            if (targetUrl == "#updates" || targetUrl.endsWith("#updates")) {
+                return "${UrlRouter.DEFAULT_HUB_URL}/#updates"
+            }
+            return targetUrl
+        }
 
         val data = intent?.data
         if (data != null) {

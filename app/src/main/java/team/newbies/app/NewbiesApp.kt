@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.google.android.material.color.DynamicColors
@@ -35,6 +36,7 @@ class NewbiesApp : Application() {
                 enableLights(true)
                 lightColor = Color.parseColor("#d97757")
                 enableVibration(true)
+                setShowBadge(true)
             }
             val notificationManager: NotificationManager =
                 getSystemService(NotificationManager::class.java)
@@ -47,14 +49,21 @@ class NewbiesApp : Application() {
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
 
-        val updateRequest = PeriodicWorkRequestBuilder<UpdatesWorker>(2, TimeUnit.HOURS)
+        // 15-minute periodic background check
+        val periodicRequest = PeriodicWorkRequestBuilder<UpdatesWorker>(15, TimeUnit.MINUTES)
             .setConstraints(constraints)
             .build()
 
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
             "NewbiesTeamUpdatesSync",
-            ExistingPeriodicWorkPolicy.KEEP,
-            updateRequest
+            ExistingPeriodicWorkPolicy.UPDATE,
+            periodicRequest
         )
+
+        // Immediate one-time background check on application startup
+        val immediateRequest = OneTimeWorkRequestBuilder<UpdatesWorker>()
+            .setConstraints(constraints)
+            .build()
+        WorkManager.getInstance(this).enqueue(immediateRequest)
     }
 }

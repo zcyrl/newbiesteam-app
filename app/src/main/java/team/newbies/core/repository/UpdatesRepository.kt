@@ -13,17 +13,21 @@ import java.net.URL
  */
 class UpdatesRepository(
     private val jsonUrl: String = DEFAULT_JSON_FEED,
+    private val mirrorJsonUrl: String = MIRROR_JSON_FEED,
     private val fallbackJsUrl: String = DEFAULT_DATA_JS
 ) {
     companion object {
         const val DEFAULT_JSON_FEED = "https://newbiesteam.surge.sh/updates.json"
+        const val MIRROR_JSON_FEED = "https://newbiesbase.surge.sh/updates.json"
         const val DEFAULT_DATA_JS = "https://newbiesteam.surge.sh/data.js"
     }
 
     fun fetchLatestUpdate(): UpdatePost? {
-        // 1. Primary: JSON Endpoint
+        val timestamp = System.currentTimeMillis()
+
+        // 1. Primary: JSON Endpoint with cache-busting
         try {
-            val jsonText = httpGet(jsonUrl)
+            val jsonText = httpGet("$jsonUrl?t=$timestamp")
             if (!jsonText.isNullOrBlank()) {
                 val posts = FeedParser.parseJsonFeed(jsonText)
                 if (posts.isNotEmpty()) {
@@ -32,9 +36,20 @@ class UpdatesRepository(
             }
         } catch (_: Exception) {}
 
-        // 2. Fallback: data.js Regex
+        // 2. Mirror: JSON Endpoint with cache-busting
         try {
-            val jsText = httpGet(fallbackJsUrl)
+            val mirrorText = httpGet("$mirrorJsonUrl?t=$timestamp")
+            if (!mirrorText.isNullOrBlank()) {
+                val posts = FeedParser.parseJsonFeed(mirrorText)
+                if (posts.isNotEmpty()) {
+                    return posts.first()
+                }
+            }
+        } catch (_: Exception) {}
+
+        // 3. Fallback: data.js Regex with cache-busting
+        try {
+            val jsText = httpGet("$fallbackJsUrl?t=$timestamp")
             if (!jsText.isNullOrBlank()) {
                 val fallbackPost = FeedParser.parseDataJsFallback(jsText)
                 if (fallbackPost != null) {
@@ -55,7 +70,10 @@ class UpdatesRepository(
                 connectTimeout = 8000
                 readTimeout = 8000
                 instanceFollowRedirects = true
-                setRequestProperty("User-Agent", "NewbiesTeam-Android/1.2.1 (KMP-Ready)")
+                useCaches = false
+                setRequestProperty("User-Agent", "NewbiesTeam-Android/1.2.3")
+                setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                setRequestProperty("Pragma", "no-cache")
             }
             if (connection.responseCode in 200..299) {
                 BufferedReader(InputStreamReader(connection.inputStream)).use { it.readText() }
