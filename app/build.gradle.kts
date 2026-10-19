@@ -37,8 +37,8 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            isDebuggable = true
-            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -56,6 +56,13 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    packaging {
+        resources {
+            excludes += "DebugProbesKt.bin"
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
     }
 }
 
