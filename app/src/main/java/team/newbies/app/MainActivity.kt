@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.Animatable
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -145,18 +146,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun startSplashAnimation() {
-        val scaleX = ObjectAnimator.ofFloat(splashLogo, View.SCALE_X, 0.92f, 1.06f).apply {
-            duration = 1100
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = AccelerateDecelerateInterpolator()
-        }
-        val scaleY = ObjectAnimator.ofFloat(splashLogo, View.SCALE_Y, 0.92f, 1.06f).apply {
-            duration = 1100
-            repeatMode = ValueAnimator.REVERSE
-            repeatCount = ValueAnimator.INFINITE
-            interpolator = AccelerateDecelerateInterpolator()
-        }
+        (splashLogo.drawable as? Animatable)?.start()
+
         val glowAlpha = ObjectAnimator.ofFloat(splashGlow, View.ALPHA, 0.35f, 0.85f).apply {
             duration = 1300
             repeatMode = ValueAnimator.REVERSE
@@ -165,7 +156,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         splashAnimatorSet = AnimatorSet().apply {
-            playTogether(scaleX, scaleY, glowAlpha)
+            play(glowAlpha)
             start()
         }
     }
@@ -180,6 +171,7 @@ class MainActivity : AppCompatActivity() {
             .setDuration(420)
             .withEndAction {
                 splashAnimatorSet?.cancel()
+                (splashLogo.drawable as? Animatable)?.stop()
                 splashOverlay.visibility = View.GONE
             }
             .start()
@@ -211,7 +203,7 @@ class MainActivity : AppCompatActivity() {
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-        settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/1.2.1"
+        settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/1.2.2"
 
         applyCacheMode()
 
@@ -407,6 +399,7 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         splashHandler.removeCallbacks(splashTimeoutRunnable)
         splashAnimatorSet?.cancel()
+        (splashLogo.drawable as? Animatable)?.stop()
         webView.apply {
             stopLoading()
             loadUrl("about:blank")
