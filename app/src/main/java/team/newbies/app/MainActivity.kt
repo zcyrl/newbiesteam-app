@@ -204,22 +204,41 @@ class MainActivity : AppCompatActivity() {
         settings.useWideViewPort = true
         settings.loadWithOverviewMode = true
         val appVersionName = try {
-            packageManager.getPackageInfo(packageName, 0).versionName ?: "1.2.3"
+            BuildConfig.VERSION_NAME
         } catch (_: Exception) {
-            "1.2.3"
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0)).versionName ?: "1.2.3"
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageManager.getPackageInfo(packageName, 0).versionName ?: "1.2.3"
+                }
+            } catch (_: Exception) {
+                "1.2.3"
+            }
         }
         val appVersionCode = try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                packageManager.getPackageInfo(packageName, 0).longVersionCode
-            } else {
-                @Suppress("DEPRECATION")
-                packageManager.getPackageInfo(packageName, 0).versionCode.toLong()
-            }
+            BuildConfig.VERSION_CODE.toLong()
         } catch (_: Exception) {
-            7L
+            try {
+                val pInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    packageManager.getPackageInfo(packageName, PackageManager.PackageInfoFlags.of(0))
+                } else {
+                    @Suppress("DEPRECATION")
+                    packageManager.getPackageInfo(packageName, 0)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    pInfo.longVersionCode
+                } else {
+                    @Suppress("DEPRECATION")
+                    pInfo.versionCode.toLong()
+                }
+            } catch (_: Exception) {
+                8L
+            }
         }
 
-        settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/$appVersionName"
+        settings.userAgentString = "${settings.userAgentString} NewbiesTeamAndroid/$appVersionName (Build $appVersionCode)"
 
         webView.addJavascriptInterface(object {
             @JavascriptInterface
@@ -230,6 +249,9 @@ class MainActivity : AppCompatActivity() {
 
             @JavascriptInterface
             fun isAndroidApp(): Boolean = true
+
+            @JavascriptInterface
+            fun getAppInfo(): String = """{"appName":"NewbiesTeam","versionName":"$appVersionName","versionCode":$appVersionCode,"isNativeApp":true}"""
         }, "AndroidBridge")
 
         applyCacheMode()
@@ -239,10 +261,12 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                injectNativeBridgeState(view, appVersionName, appVersionCode)
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
+                injectNativeBridgeState(view, appVersionName, appVersionCode)
                 swipeRefresh.isRefreshing = false
                 dismissSplash()
             }
@@ -357,6 +381,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun injectNativeBridgeState(view: WebView?, versionName: String, versionCode: Long) {
+        val script = """
+            (function() {
+                try {
+                    window.__NBT_APP_VERSION__ = "$versionName";
+                    window.__NBT_BUILD_CODE__ = "$versionCode";
+                    window.__NBT_IS_APP__ = true;
+                    if (window.dispatchEvent) {
+                        window.dispatchEvent(new CustomEvent("nbt:app-ready", {
+                            detail: { version: "$versionName", build: "$versionCode" }
+                        }));
+                    }
+                    if (typeof syncFooterAppVersion === "function") {
+                        syncFooterAppVersion();
+                    }
+                } catch (e) {
+                    console.error("NBT bridge injection error:", e);
+                }
+            })();
+        """.trimIndent()
+        view?.evaluateJavascript(script, null)
+    }
+
     private fun setupSwipeRefresh() {
         swipeRefresh.setColorSchemeResources(
             R.color.m3_primary,
@@ -366,6 +413,7 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh.setProgressBackgroundColorSchemeResource(R.color.black_card)
 
         swipeRefresh.setOnRefreshListener {
+            webView.clearCache(true)
             applyCacheMode()
             webView.reload()
         }
