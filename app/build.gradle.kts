@@ -14,8 +14,8 @@ android {
         applicationId = "team.newbies.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 17
-        versionName = "2.1.0"
+        versionCode = 19
+        versionName = "2.1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
