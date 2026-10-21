@@ -8,7 +8,6 @@ It wraps the website in an Android WebView so you can browse ROMs, kernels, reco
 
 ## What it does
 
-* **Dark Theme**: Matches the site's dark AMOLED background (`#120d0d`) and crimson colors (`#d97757`).
 * **Offline Caching**: If you have internet it loads fresh content. If you're offline, it loads from cache so you can still read guides.
 * **External Downloads**: Download links (Google Drive, SourceForge, GitHub, Mega, MediaFire, Telegram, and direct `.zip` or `.apk` files) open in your browser or default app instead of breaking inside the WebView.
 * **Back Button Navigation**: Pressing your phone's back button navigates back through pages before closing the app.
