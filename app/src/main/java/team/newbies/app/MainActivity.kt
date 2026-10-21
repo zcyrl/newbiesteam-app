@@ -375,7 +375,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     val fallbackUrl = parsedIntent.getStringExtra("browser_fallback_url")
                     if (!fallbackUrl.isNullOrEmpty()) {
-                        handleUrlNavigation(fallbackUrl)
+                        openExternal(Uri.parse(fallbackUrl))
                         return
                     }
                 }
