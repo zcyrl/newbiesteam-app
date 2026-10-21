@@ -289,6 +289,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 injectNativeBridgeState(view, appVersionName, appVersionCode)
+                applyCacheMode()
                 swipeRefresh.isRefreshing = false
                 dismissSplash()
             }
@@ -436,7 +437,11 @@ class MainActivity : AppCompatActivity() {
 
         swipeRefresh.setOnRefreshListener {
             webView.clearCache(true)
-            applyCacheMode()
+            if (isNetworkConnected()) {
+                webView.settings.cacheMode = WebSettings.LOAD_NO_CACHE
+            } else {
+                applyCacheMode()
+            }
             webView.reload()
         }
 
