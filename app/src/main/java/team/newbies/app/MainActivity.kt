@@ -73,6 +73,9 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
+        // Unlock the display's maximum panel refresh rate (up to 144Hz on supported panels)
+        unlockHighRefreshRate()
+
         initViews()
         applyWindowInsets()
         startSplashAnimation()
@@ -148,6 +151,35 @@ class MainActivity : AppCompatActivity() {
         val controller = WindowCompat.getInsetsController(window, window.decorView)
         controller.isAppearanceLightStatusBars = false
         controller.isAppearanceLightNavigationBars = false
+    }
+
+    /**
+     * Requests the highest available refresh rate for the panel (up to 144Hz on the
+     * Infinix GT 20 Pro and other high-refresh phones). Picking a fixed display mode via
+     * preferredDisplayModeId forces the compositor and WebView surface to run at the
+     * native panel frequency instead of the battery-default 60Hz throttle.
+     */
+    private fun unlockHighRefreshRate() {
+        try {
+            val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                display
+            } else {
+                @Suppress("DEPRECATION")
+                windowManager.defaultDisplay
+            } ?: return
+            val modes = display.supportedModes ?: return
+            val current = display.mode
+            val best = modes
+                .filter { it.physicalWidth == current.physicalWidth && it.physicalHeight == current.physicalHeight }
+                .maxByOrNull { it.refreshRate } ?: return
+            if (best.modeId != current.modeId) {
+                val params = window.attributes
+                params.preferredDisplayModeId = best.modeId
+                window.attributes = params
+            }
+        } catch (_: Exception) {
+            // Some devices deny mode switching; silently keep system default.
+        }
     }
 
     private fun initViews() {
