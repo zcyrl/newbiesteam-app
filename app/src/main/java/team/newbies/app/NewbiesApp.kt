@@ -23,7 +23,9 @@ class NewbiesApp : Application() {
         DynamicColors.applyToActivitiesIfAvailable(this)
 
         createNotificationChannel()
+        createAppUpdateChannel()
         scheduleUpdatesWorker()
+        scheduleAppUpdateWorker()
     }
 
     private fun createNotificationChannel() {
@@ -62,6 +64,54 @@ class NewbiesApp : Application() {
 
         // Immediate one-time background check on application startup
         val immediateRequest = OneTimeWorkRequestBuilder<UpdatesWorker>()
+            .setConstraints(constraints)
+            .build()
+        WorkManager.getInstance(this).enqueue(immediateRequest)
+    }
+
+    private fun createAppUpdateChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val name = getString(R.string.app_update_channel_name)
+            val descriptionText = getString(R.string.app_update_channel_desc)
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel(AppUpdateWorker.CHANNEL_ID, name, importance).apply {
+                description = descriptionText
+                enableLights(true)
+                lightColor = Color.parseColor("#d97757")
+                enableVibration(true)
+                setShowBadge(true)
+            }
+            val notificationManager: NotificationManager =
+                getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    /**
+     * APP-version update checker: OS-scheduled periodic WorkManager job with a
+     * 4-hour period and a 3-hour flex window, so a check fires roughly every
+     * 3-4 hours whenever the device has a network connection. 100% free, no
+     * push server, works without Google Play Services.
+     */
+    private fun scheduleAppUpdateWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val periodicRequest = PeriodicWorkRequestBuilder<AppUpdateWorker>(
+            4, TimeUnit.HOURS,      // repeat interval
+            3, TimeUnit.HOURS       // flex window: checks land 1-3h into each period
+        )
+            .setConstraints(constraints)
+            .build()
+
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "NewbiesTeamAppUpdateCheck",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            periodicRequest
+        )
+
+        val immediateRequest = OneTimeWorkRequestBuilder<AppUpdateWorker>()
             .setConstraints(constraints)
             .build()
         WorkManager.getInstance(this).enqueue(immediateRequest)
