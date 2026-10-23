@@ -3,4 +3,6 @@
     <string name="app_subtitle">GT 20 PRO WEB HUB</string>
     <string name="notification_channel_name">NewbiesTeam Releases &amp; Updates</string>
     <string name="notification_channel_desc">Alerts for new custom ROMs, kernels, modules, and changelogs</string>
+    <string name="app_update_channel_name">App Update Checker</string>
+    <string name="app_update_channel_desc">Background checks (~every 3-4 hours) for new official NewbiesTeam app versions</string>
 </resources>
