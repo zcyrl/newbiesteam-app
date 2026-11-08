@@ -18,14 +18,14 @@ It wraps the website in an Android WebView so you can browse ROMs, kernels, reco
 
 
 
-## Release Signing & Play Protect
+## Release Signing
 
-The app is signed with a permanent release keystore (`app/release.jks`, alias `newbiesteam`) so that:
-* Every build uses the exact same signature, so users can install future updates without uninstalling.
-* Play Protect remembers your key signature.
+Release builds are signed with a keystore injected by GitHub Actions from encrypted repository secrets (`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). The keystore is never committed.
 
-If Google Play Protect shows an "Unrecognized app" popup on fresh installs:
-1. Tap **More details** -> **Install anyway**.
-2. Once installed, future updates signed with this key install without warnings.
+For local release builds, place the keystore at `app/release.jks` (gitignored) and export the same environment variables before running `./gradlew assembleRelease`.
+
+> **Signing-key rotation:** a build signed with a new key cannot update an install signed with the old key. Uninstall the old app first, then install the new build.
+
+If Google Play Protect shows an "Unrecognized app" popup on fresh installs, choose **More details → Install anyway**.
 
 

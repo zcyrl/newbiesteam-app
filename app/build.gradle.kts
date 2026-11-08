@@ -14,8 +14,8 @@ android {
         applicationId = "team.newbies.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 41
-        versionName = "3.1.3"
+        versionCode = 42
+        versionName = "3.1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -26,10 +26,11 @@ android {
 
     signingConfigs {
         create("release") {
+            // Never hardcode signing secrets. CI supplies these from encrypted Actions secrets.
             storeFile = file("release.jks")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: "REDACTED_SIGNING_SECRET"
+            storePassword = System.getenv("KEYSTORE_PASSWORD")
             keyAlias = System.getenv("KEY_ALIAS") ?: "newbiesteam"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: "REDACTED_SIGNING_SECRET"
+            keyPassword = System.getenv("KEY_PASSWORD")
             storeType = "PKCS12"
             enableV1Signing = true
             enableV2Signing = true
