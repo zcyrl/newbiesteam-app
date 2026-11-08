@@ -26,6 +26,11 @@ For local release builds, place the keystore at `app/release.jks` (gitignored) a
 
 > **Signing-key rotation:** a build signed with a new key cannot update an install signed with the old key. Uninstall the old app first, then install the new build.
 
+Current release certificate SHA-256:
+`16:3B:CF:DB:9D:D4:21:B1:3F:72:9D:C5:4B:C1:13:69:8C:54:B8:B8:5F:71:8B:0A:94:D4:FD:80:A4:0D:1C:64`
+
+> **Security notice:** builds before v3.1.4 used a signing key that is no longer trusted. Uninstall the old app and install v3.1.4+.
+
 If Google Play Protect shows an "Unrecognized app" popup on fresh installs, choose **More details → Install anyway**.
 
 
